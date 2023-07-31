@@ -1,2 +1,6 @@
-# picore-headless-setup
-A headless picore installation script for custom sized sd card images
+# uavcore-setup
+create custom sdcord images for uavcore 
+
+
+
+forked from https://github.com/nopmop/picore-headless-setup

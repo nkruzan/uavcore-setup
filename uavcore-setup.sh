@@ -7,9 +7,9 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # IMAGE CONFIGURATION
 # ==============================================================================
 UAVCORE_ARCH="armv6"
-UAVCORE_VERSION="14.x"
-UAVCORE_SUBVERSION="14.0"
-UAVCORE_KERNEL_VERSION="6.1.25"
+UAVCORE_VERSION="13.x"
+UAVCORE_SUBVERSION="13.0.3"
+UAVCORE_KERNEL_VERSION="5.10.77"
 IMG_BLOCKSIZE=512
 IMG_BLOCKS=204800 # 512 * 204800 = 104857600 (~100MB)
 # ==============================================================================

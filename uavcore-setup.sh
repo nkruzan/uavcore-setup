@@ -267,7 +267,7 @@ function test_package_urls(){
         if validate_url $URL; then 
             echo " OK";
         else 
-            echo " ERROR: url not available"; 
+            echo " ERROR: $URL not available"; 
             cleanup
             kill -s TERM $TOP_PID
         fi

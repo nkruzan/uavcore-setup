@@ -146,7 +146,7 @@ function download_release_maybe(){
         unzip -o "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.zip" -d $WORK_DIR
         check_release
     else
-        echo " * ERROR: url not available"
+        echo " * ERROR: $UAVCORE_RELEASE_URL url not available"
         kill -s TERM $TOP_PID
     fi
     echo ""

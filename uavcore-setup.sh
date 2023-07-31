@@ -6,6 +6,8 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # ==============================================================================
 # IMAGE CONFIGURATION
 # ==============================================================================
+CORE_NAME_REMOTE="piCore"
+CORE_NAME_LOCAL="uavCore"
 UAVCORE_ARCH="armv6"
 UAVCORE_VERSION="13.x"
 UAVCORE_SUBVERSION="13.0.3"
@@ -31,7 +33,7 @@ group=CCMP TKIP
 # ==============================================================================
 # ==============================================================================
 # 
-WORK_DIR=./uavCore-$UAVCORE_SUBVERSION
+WORK_DIR=./$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION
 MNT1_DIR="$WORK_DIR/mnt1"
 MNT2_DIR="$WORK_DIR/mnt2"
 PACKAGES_DIR="$WORK_DIR/pkg"
@@ -43,8 +45,8 @@ UAVCORE_REPOSITORY_URL="$UAVCORE_BASE_URL/$UAVCORE_VERSION/$UAVCORE_ARCH"
 UAVCORE_RELEASES_URL="$UAVCORE_REPOSITORY_URL/releases/RPi"
 UAVCORE_PACKAGES_URL="$UAVCORE_REPOSITORY_URL/tcz"
 UAVCORE_PACKAGE_EXTESION="tcz"
-UAVCORE_RELEASE_URL="$UAVCORE_RELEASES_URL/piCore-$UAVCORE_SUBVERSION.zip"
-UAVCORE_KERNEL_SUFFIX="-$UAVCORE_KERNEL_VERSION-piCore"
+UAVCORE_RELEASE_URL="$UAVCORE_RELEASES_URL/$CORE_NAME_REMOTE-$UAVCORE_SUBVERSION.zip"
+UAVCORE_KERNEL_SUFFIX="-$UAVCORE_KERNEL_VERSION-$CORE_NAME_REMOTE"
 UAVCORE_LOCAL_PACKAGE_PATH="tce/optional"
 UAVCORE_LOCAL_MYDATA="tce/mydata"
 
@@ -143,7 +145,7 @@ function download_release_maybe(){
         read -n1 -r -p " * Press any key to download..." key
         echo ""
         wget $WGET_OPTS $UAVCORE_RELEASE_URL -P $WORK_DIR &&
-        unzip -o "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.zip" -d $WORK_DIR
+        unzip -o "$WORK_DIR/$CORE_NAME_REMOTE-$UAVCORE_SUBVERSION.zip" -d $WORK_DIR
         check_release
     else
         echo " * ERROR: $UAVCORE_RELEASE_URL url not available"
@@ -156,12 +158,12 @@ function check_release(){
     echo "================================================================================" 
     echo " * Checking release"
     echo "================================================================================" 
-    if [ -f "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.zip" ]; then 
+    if [ -f "$WORK_DIR/$CORE_NAME_REMOTE-$UAVCORE_SUBVERSION.zip" ]; then 
         cd "$WORK_DIR"
-        if md5sum --status -c "uavCore-$UAVCORE_SUBVERSION.img.md5.txt"; then
-            echo "  - Release available: $WORK_DIR/uavCore-$UAVCORE_SUBVERSION.img"
+        if md5sum --status -c "$CORE_NAME_REMOTE-$UAVCORE_SUBVERSION.img.md5.txt"; then
+            echo "  - Release available: $WORK_DIR/$CORE_NAME_REMOTE-$UAVCORE_SUBVERSION.img"
         else
-            echo "  - Checksum FAILED: uavCore-$UAVCORE_SUBVERSION.img.md5.txt"
+            echo "  - Checksum FAILED: $CORE_NAME_REMOTE-$UAVCORE_SUBVERSION.img.md5.txt"
             download_release_maybe
         fi
     else 
@@ -177,62 +179,62 @@ function make_image(){
     echo "================================================================================" 
     echo "  - generating empty image (be patient)"
     cd "$SCRIPT_DIR" > /dev/null
-    sudo touch $WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img
-    sudo dd bs=$IMG_BLOCKSIZE count=$IMG_BLOCKS if=/dev/zero of=$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img
+    sudo touch $WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img
+    sudo dd bs=$IMG_BLOCKSIZE count=$IMG_BLOCKS if=/dev/zero of=$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img
     echo ""    
     echo "  - cloning into custom image (be patient)"
-    SRC="$(sudo losetup -f --show $WORK_DIR/uavCore-$UAVCORE_SUBVERSION.img)"
-    DEST="$(sudo losetup -f --show $WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img)"
+    SRC="$(sudo losetup -f --show $WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.img)"
+    DEST="$(sudo losetup -f --show $WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img)"
     sudo dd if=$SRC of=$DEST
 
     echo "  - init custom image loop device"
     sudo losetup -d $SRC $DEST
     
     echo "  - setting up custom image partitions"
-    rm -rf "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img1"
-    rm -rf "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img2"
-    tmp=$(sudo kpartx -l "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img" | awk '{ print $1 }' )
+    rm -rf "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img1"
+    rm -rf "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img2"
+    tmp=$(sudo kpartx -l "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img" | awk '{ print $1 }' )
     IFS=$'\n' read -rd '' -a parts <<<"$tmp"
 
     echo "  - trying kpartx (adding...)"
-    sudo kpartx -a "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img"
+    sudo kpartx -a "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img"
     sleep 3
-    ln -s /dev/mapper/${parts[0]} "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img1" &> /dev/null
-    ln -s /dev/mapper/${parts[1]} "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img2" &> /dev/null
+    ln -s /dev/mapper/${parts[0]} "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img1" &> /dev/null
+    ln -s /dev/mapper/${parts[1]} "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img2" &> /dev/null
 
     echo "  - resizing custom image partition"
-    tmp=$(sudo parted -m -s "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img" unit s print | awk --field-separator=":" '{print $2}')
+    tmp=$(sudo parted -m -s "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img" unit s print | awk --field-separator=":" '{print $2}')
     IFS=$'\n' read -rd '' -a size <<<"$tmp"
     start=${size[2]::-1}
     end=$((${size[0]::-1}-1))
 
     echo "  - trying parted"
-    sudo parted -s "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img" unit s rm 2
-    sudo parted -s "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img" unit s mkpart primary $start $end
+    sudo parted -s "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img" unit s rm 2
+    sudo parted -s "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img" unit s mkpart primary $start $end
 
     echo "  - trying kpartx (cleaning up...)"
-    sudo kpartx -d "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img" &> /dev/null
+    sudo kpartx -d "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img" &> /dev/null
     sleep 3
 
     echo "  - trying kpartx (adding...)"
-    sudo kpartx -a "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img"
+    sudo kpartx -a "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img"
     sleep 3
-    ln -s /dev/mapper/${parts[0]} "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img1" &> /dev/null
-    ln -s /dev/mapper/${parts[1]} "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img2" &> /dev/null
+    ln -s /dev/mapper/${parts[0]} "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img1" &> /dev/null
+    ln -s /dev/mapper/${parts[1]} "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img2" &> /dev/null
 
     echo ""
     echo "  - checking filesystem (custom image)"
-    sudo e2fsck -f "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img2"
+    sudo e2fsck -f "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img2"
 
     echo ""
     echo "  - resizing filesystem (custom image)"
-    sudo resize2fs "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img2"
+    sudo resize2fs "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img2"
     
     echo ""
     echo "  - mounting partition n. 1 (custom image)"
-    sudo mount "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img1" $MNT1_DIR
+    sudo mount "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img1" $MNT1_DIR
     echo "  - mounting partition n. 2 (custom image)"
-    sudo mount "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img2" $MNT2_DIR
+    sudo mount "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img2" $MNT2_DIR
 }
 
 function cleanup(){
@@ -247,10 +249,10 @@ function cleanup(){
         sudo umount "$MNT2_DIR" &> /dev/null
         rm -rf "$MNT2_DIR"
     fi
-    sudo kpartx -d "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img" &> /dev/null
-    [ -L "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img1" ] && rm "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img1"
-    [ -L "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img2" ] && rm "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img2"
-    #[ -e "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.zip" ] && rm "$WORK_DIR/uavCore-$UAVCORE_SUBVERSION.zip"
+    sudo kpartx -d "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img" &> /dev/null
+    [ -L "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img1" ] && rm "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img1"
+    [ -L "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img2" ] && rm "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img2"
+    #[ -e "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.zip" ] && rm "$WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.zip"
     [ -d "$UAVCORE_FILESYSTEM_DIR" ] && sudo rm -rf "$UAVCORE_FILESYSTEM_DIR" 
     echo "  - OK"    
     echo ""
@@ -358,7 +360,7 @@ function rebuild_filesystem(){
     echo "================================================================================" 
     sudo sh -c "(cd $UAVCORE_FILESYSTEM_DIR && find | cpio -o -H newc) | gzip -2 > ${MNT1_DIR}/${UAVCORE_SUBVERSION}.gz"
     echo ""
-    echo " * Custom image: $WORK_DIR/uavCore-$UAVCORE_SUBVERSION.custom.img" 
+    echo " * Custom image: $WORK_DIR/$CORE_NAME_LOCAL-$UAVCORE_SUBVERSION.custom.img" 
     echo ""
 }
 
